@@ -1,5 +1,6 @@
 import chess
 import random
+import chess.pgn
 from math import log, sqrt, e, inf
 
 class Node:
@@ -33,7 +34,6 @@ def rollout(curr_node):
         tmp_state.push_san(move)
         child = Node()
         child.state = tmp_state
-        child.action = move
         child.parent = curr_node
         curr_node.children.add(child)
 
@@ -45,21 +45,25 @@ def expand(curr_node, white):
         return curr_node
 
     if white:
+        idx = -1
         max_ucb = -inf
         sel_child = None
         for child in curr_node.children:
             tmp = ucb1(child)
             if tmp > max_ucb:
+                idx = child
                 max_ucb = tmp
                 sel_child = child
         return expand(sel_child, False)
 
     else:
+        idx = -1
         min_ucb = inf
         sel_child = None
         for child in curr_node.children:
             tmp = ucb1(child)
             if tmp < min_ucb:
+                idx = child
                 min_ucb = tmp
                 sel_child = child
         return expand(sel_child, True)
@@ -74,89 +78,88 @@ def rollback(curr_node, reward):
         curr_node = curr_node.parent
     return curr_node
 
-def generate_state_id(board_state, move):
-    return str(board_state) + '_' + move
 
-def mcts_pred(curr_node, over, white, board, iterations=10):
+def mcts_pred(curr_node, over, white, iterations=1000):
     if over:
         return None, curr_node
-
-    while iterations > 0:
-        # Fetch the list of legal moves from the current state of the board
-        all_moves = [curr_node.state.san(i) for i in list(curr_node.state.legal_moves)]
-        map_state_move = dict()
-
-        for move in all_moves:
-            tmp_state = chess.Board(curr_node.state.fen())
-            tmp_state.push_san(move)
-
-            # Check for game end
-            if tmp_state.is_game_over():
-                continue
-
-            child = Node()
-            child.state = tmp_state
-            child.action = move
-            child.parent = curr_node
-            curr_node.children.add(child)
-            state_id = generate_state_id(tmp_state, move)
-            map_state_move[state_id] = move
-
-        if white:
+    all_moves = [curr_node.state.san(i) for i in list(curr_node.state.legal_moves)]
+    map_state_move = dict()
+    for i in all_moves:
+        tmp_state = chess.Board(curr_node.state.fen())
+        tmp_state.push_san(i)
+        child = Node()
+        child.state = tmp_state
+        child.parent = curr_node
+        curr_node.children.add(child)
+        map_state_move[child] = i
+    while (iterations > 0):
+        if (white):
+            idx = -1
             max_ucb = -inf
             sel_child = None
-            for child in curr_node.children:
-                tmp = ucb1(child)
-                if tmp > max_ucb:
+            for i in curr_node.children:
+                tmp = ucb1(i)
+                if (tmp > max_ucb):
+                    idx = i
                     max_ucb = tmp
-                    sel_child = child
-            ex_child = expand(sel_child, False)
+                    sel_child = i
+            ex_child = expand(sel_child, 0)
             reward, state = rollout(ex_child)
             curr_node = rollback(state, reward)
             iterations -= 1
         else:
+            idx = -1
             min_ucb = inf
             sel_child = None
-            for child in curr_node.children:
-                tmp = ucb1(child)
-                if tmp < min_ucb:
+            for i in curr_node.children:
+                tmp = ucb1(i)
+                if (tmp < min_ucb):
+                    idx = i
                     min_ucb = tmp
-                    sel_child = child
-            ex_child = expand(sel_child, True)
+                    sel_child = i
+
+            ex_child = expand(sel_child, 1)
+
             reward, state = rollout(ex_child)
+
             curr_node = rollback(state, reward)
             iterations -= 1
+    if (white):
 
-        # Update available moves after each move
-        all_moves = [curr_node.state.san(i) for i in list(curr_node.state.legal_moves)]
-
-    if white:
         mx = -inf
+        idx = -1
         selected_move = ''
-        for child in curr_node.children:
-            tmp = ucb1(child)
-            if tmp > mx:
+        for i in (curr_node.children):
+            tmp = ucb1(i)
+            if (tmp > mx):
                 mx = tmp
-                selected_move = child.action
-
-        return selected_move, curr_node
+                selected_move = map_state_move[i]
+        return selected_move
     else:
         mn = inf
+        idx = -1
         selected_move = ''
-        for child in curr_node.children:
-            tmp = ucb1(child)
-            if tmp < mn:
+        for i in (curr_node.children):
+            tmp = ucb1(i)
+            if (tmp < mn):
                 mn = tmp
-                selected_move = child.action
-        return selected_move, curr_node
+                selected_move = map_state_move[i]
+        return selected_move
+
+
 
 def main():
-    root = Node()
     board = chess.Board()
     print(board)
     print()
-
+    white = 1
+    moves = 0
+    evaluations = []
+    sm = 0
+    cnt = 0
+    pgn = []
     while not board.is_game_over():
+
         if board.turn == chess.WHITE:
             if board.is_checkmate():
                 print("Black wins by checkmate!")
@@ -166,21 +169,21 @@ def main():
                 break
 
             print("Bot's move:")
-            bot_move, root = mcts_pred(root, board.is_game_over(), True, board, iterations=100)  # Update the root node
+
             try:
-                move = board.parse_san(bot_move)
-                if move in board.legal_moves:
-                    board.push(move)
-                    print(board)
-                    print()
-                else:
-                    print("Invalid move by bot. Please check the bot logic.")
-                    print("Bot attempted to move:", bot_move)
-                    break
-            except ValueError:
-                print("Invalid move by bot. Please check the bot logic.")
-                print("Bot attempted to move:", bot_move)
-                break
+                all_moves = [board.san(i) for i in list(board.legal_moves)]
+                root = Node()
+                root.state = board
+                result = mcts_pred(root, board.is_game_over(), white)
+                board.push_san(result)
+                pgn.append(result)
+                white ^= 1
+                print(board)
+                print()
+                moves += 1
+                print(pgn[moves-1])
+                print()
+
             except Exception as e:
                 print("An error occurred in bot's move:", e)
                 break

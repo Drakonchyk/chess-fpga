@@ -1,100 +1,10 @@
-module move_verification(
-move_is_legal);
+module move_verification(board, move_start, move_end, move_piece, move_is_legal);
 
-reg [3:0] board[63:0];
-reg[5:0] move_start;
-reg[5:0] move_end;
-reg[3:0] move_piece;
+inout wire[3:0] board[63:0];
+input wire[5:0] move_start;
+input wire[5:0] move_end;
 
-initial
-begin
-
-board[6'b000_000] <= { COLOR_WHITE, PIECE_ROOK };
-board[6'b000_001] <= { COLOR_WHITE, PIECE_KNIGHT };
-board[6'b000_010] <= { COLOR_WHITE, PIECE_BISHOP };
-board[6'b000_011] <= { COLOR_WHITE, PIECE_QUEEN };
-board[6'b000_100] <= { COLOR_WHITE, PIECE_KING };
-board[6'b000_101] <= { COLOR_WHITE, PIECE_BISHOP };
-board[6'b000_110] <= { COLOR_WHITE, PIECE_KNIGHT };
-board[6'b000_111] <= { COLOR_WHITE, PIECE_ROOK };
-
-board[6'b001_000] <= { COLOR_WHITE, PIECE_PAWN };
-board[6'b001_001] <= { COLOR_WHITE, PIECE_PAWN };
-board[6'b001_010] <= { COLOR_WHITE, PIECE_PAWN };
-board[6'b001_011] <= { COLOR_WHITE, PIECE_PAWN };
-board[6'b001_100] <= { COLOR_WHITE, PIECE_PAWN };
-board[6'b001_101] <= { COLOR_WHITE, PIECE_PAWN };
-board[6'b001_110] <= { COLOR_WHITE, PIECE_PAWN };
-board[6'b001_111] <= { COLOR_WHITE, PIECE_PAWN };
-
-board[6'b010_000] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b010_001] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b010_010] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b010_011] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b010_100] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b010_101] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b010_110] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b010_111] <= { COLOR_WHITE, PIECE_NONE };
-
-board[6'b011_000] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b011_001] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b011_010] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b011_011] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b011_100] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b011_101] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b011_110] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b011_111] <= { COLOR_WHITE, PIECE_NONE };
-
-
-board[6'b100_000] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b100_001] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b100_010] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b100_011] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b100_100] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b100_101] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b100_110] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b100_111] <= { COLOR_WHITE, PIECE_NONE };
-
-
-board[6'b101_000] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b101_001] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b101_010] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b101_011] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b101_100] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b101_101] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b101_110] <= { COLOR_WHITE, PIECE_NONE };
-board[6'b101_111] <= { COLOR_WHITE, PIECE_NONE };
-
-board[6'b110_000] <= { COLOR_BLACK, PIECE_PAWN };
-board[6'b110_001] <= { COLOR_BLACK, PIECE_PAWN };
-board[6'b110_010] <= { COLOR_BLACK, PIECE_PAWN };
-board[6'b110_011] <= { COLOR_BLACK, PIECE_PAWN };
-board[6'b110_100] <= { COLOR_BLACK, PIECE_PAWN };
-board[6'b110_101] <= { COLOR_BLACK, PIECE_PAWN };
-board[6'b110_110] <= { COLOR_BLACK, PIECE_PAWN };
-board[6'b110_111] <= { COLOR_BLACK, PIECE_PAWN };
-
-board[6'b111_000] <= { COLOR_BLACK, PIECE_ROOK };
-board[6'b111_001] <= { COLOR_BLACK, PIECE_KNIGHT };
-board[6'b111_010] <= { COLOR_BLACK, PIECE_BISHOP };
-board[6'b111_100] <= { COLOR_BLACK, PIECE_QUEEN };
-board[6'b111_011] <= { COLOR_BLACK, PIECE_KING };
-board[6'b111_101] <= { COLOR_BLACK, PIECE_BISHOP };
-board[6'b111_110] <= { COLOR_BLACK, PIECE_KNIGHT };
-board[6'b111_111] <= { COLOR_BLACK, PIECE_ROOK };
-
-move_start <= 6'b110_000;
-move_end <= 6'b101_000;
-
-// 3 - color, 2:0 - piece code
-move_piece <= 4'b1_001;
-end
-
-//genvar i;
-//generate for (i=0; i<64; i=i+1) begin: BOARD
-	//assign board[i] = board_input[i*4+3 : i*4];
-//end
-//endgenerate
+input wire[3:0] move_piece;
 
 output reg move_is_legal;
 

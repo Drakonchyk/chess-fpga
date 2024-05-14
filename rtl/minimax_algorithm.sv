@@ -1,78 +1,37 @@
-module minimax_algorithm(valid_moves, depth, white_to_move, next_move);
+module minimax_algorithm(board, white_to_move, next_move);
+ 
+	input wire[3:0] board[63:0];
+	input wire white_to_move;
+	output wire[11:0] next_move;
 
-  // Define pieceScore
+	localparam CHECKMATE_WHITE = 2'b10;
+	localparam CHECKMATE_BLACK = 2'b01;
 
-// Define constants
-localparam CHECKMATE_WHITE = 2'b10;
-localparam CHECKMATE_BLACK = 2'b01;
+	localparam PIECE_NONE = 4'b0000;
 
-localparam STALEMATE = 0;
-localparam DEPTH = 5;
+	localparam STALEMATE = 0;
+	localparam DEPTH = 5;
 
-initial begin
-	bit [7:0] nextMove;
-   nextMove = 0;
-   findMoveMinMax(gs, validMoves, DEPTH, gs.whiteToMove);
-end
+	reg[15:0] score = 0;
+	reg valid_move = 0;
+	integer move_amount = 0;
+	reg[11:0] valid_moves[9:0];
+// wire [255:0] passable_board;
 
-
-// Recursive Minimax
-function automatic findMoveMinMax(gs, validMoves, depth, whiteToMove);
-    bit [7:0] nextMove;
-    nextMove = 0;
-    if (depth == 0) begin
-        return scoreMaterial(gs.board);
-    end
-    if (whiteToMove) begin : white_move
-		 bit [15:0] maxScore;
-		 maxScore = -CHECKMATE;
-		 fork
-			begin: isolating_thread
-			 foreach (validMoves[i]) begin : foreach_loop
-				fork
-				  gs.makeMove();
-				  nextMove = gs.getValidMoves();
-				  bit [15:0] score = findMoveMinMax(gs, nextMove, depth-1, 0);
-				  if (score > maxScore) begin : maxscore_if
-						maxScore = score;
-						if (depth == DEPTH) nextMove = validMoves[i];
-				  end : maxscore_if
-				  gs.undoMove();
-				join_none;
-			 end : foreach_loop
-			wait fork;
-			end : isolating_thread
-			join
-		 return maxScore;
-	 end : white_move
-
-    else begin
-        bit [15:0] minScore;
-        minScore = CHECKMATE;
-		  fork
-			begin: isolating_thread_black
-			  foreach (validMoves[i]) begin : foreach_black
-				fork
-					gs.makeMove();
-					nextMove = gs.getValidMoves();
-					bit [15:0] score = findMoveMinMax(gs, nextMove, depth-1, 1);
-					if (score < minScore) begin : minscore_if
-						 minScore = score;
-						 if (depth == DEPTH) nextMove = validMoves[i];
-					end : minscore_if
-					gs.undoMove();
-				join_none;
-			  end : foreach_black
-			  wait fork;
-			end : isolating_thread_black
-			join
-        return minScore;
-    end
-endfunction
-
-
-
-
-
+// genvar i;
+// generate for (i=0; i<64; i=i+1) begin: BOARD
+//  	assign passable_board[i*4+3 : i*4] = board[i];
+// end
+// endgenerate
+	get_valid_moves move_getter(
+			board, 
+			valid_moves
+	);
+	find_move_minimax finder(
+			.valid_moves(valid_moves), 
+			.depth(DEPTH), 
+			.white_to_move(white_move), 
+			.score(score)
+	);
 
 endmodule

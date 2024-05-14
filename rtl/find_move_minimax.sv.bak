@@ -1,0 +1,58 @@
+module find_move_minmax(valid_moves, move_amount, depth, white_to_move, score);
+	input wire[11:0] valid_moves[139:0];
+	input wire[4:0] move_amount;
+	input wire[2:0] depth;
+	input wire white_to_move;
+	
+	output wire[15:0] score;
+	
+   bit [7:0] next_move;
+   next_move = 0;
+	 
+   if (depth == 0) begin : init_step
+		score_material s_material(.score(score));
+   end : init_step
+	 
+	 // if checkmate black is 10(or 01), it cant be more than a 16 bit number
+   else if (white_to_move) begin : white_move
+		bit [15:0] max_score;
+		max_score = CHECKMATE_BLACK;
+		for (int i = 0; i < move_amount; i++) begin : foreach_loop
+			reg[3:0] captured_piece;
+			captured_piece = board[valid_moves[i][11:6]];
+			
+			make_move m_move(valid_moves[i][5:0], valid_moves[i][11:6], board);
+			next_move = get_valid_moves();
+			
+			find_move_minmax move_finder(next_move, depth - 1, 0, board);
+				
+			if (score > max_score) begin : maxscore_if
+				max_score = score;
+				if (depth == DEPTH) 
+					next_move = valid_moves[i];
+			end : maxscore_if
+			
+			undo_move move_undoer(valid_moves[i][5:0], valid_moves[i][11:6], board, captured_piece);
+				
+		end : foreach_loop
+	end : white_move
+
+   else begin
+		bit [15:0] min_score;
+		// probably checkmate for white??
+      // min_score = CHECKMATE;
+		min_score = CHECKMATE_WHITE;
+		for (int i = 0; i < move_amount; i++) begin : foreach_black
+			make_move(valid_moves[i][5:0], valid_moves[i][11:6], board);
+         next_moves = get_valid_moves(board);
+         score = find_move_minmax(next_moves, depth - 1, 1, board);
+         if (score < min_score) begin : minscore_if
+				min_score = score;
+            if (depth == DEPTH) next_moves = valid_moves[i];
+         end : minscore_if
+         
+			undo_move();
+		end : foreach_black
+   end
+	
+endmodule
